@@ -1,0 +1,14 @@
+.vscode
+.idea
+*__pycache__
+
+# directories
+cache/
+dataset/
+exp_output/
+logs/
+
+# checkpoint paths
+*.npz
+*.png
+*.log
