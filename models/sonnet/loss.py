@@ -5,10 +5,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
-dataset = "CoNSeP"
 
 
-def check_weight_loss(train_dir):
+def check_weight_loss(train_dir, dataset):
     '''
         Calculate the weights using for focal_loss_modified()
         Args:
@@ -31,7 +30,7 @@ def check_weight_loss(train_dir):
     w = w/w.sum() * c
     print(f"{dataset} nt weight: {np.around(w, 3)}")
 
-    N = {}  # [28454561  5545439]
+    N = {}
     for file_name in os.listdir(train_dir):
         file_path = os.path.join(train_dir, file_name)
         fore_map = scipy.io.loadmat(file_path)['type_map']
@@ -104,24 +103,14 @@ class TypeFocalLoss(nn.Module):
         self.has_weight = has_weight
 
     def forward(self, input, target, prefix, pred_no=None):
-        # input = input.view(input.size(0), input.size(1), -1)  # N,C,H,W => N,C,H*W
-        # input = input.transpose(1,2)                          # N,C,H*W => N,H*W,C
-        # input = input.contiguous().view(-1, input.size(2))    # N,H*W,C => N*H*W,C
-        # target = target.view(-1, input.size(-1))
-        # logpt = F.log_softmax(input, dim=1)
-        # logpt = logpt.gather(1, target.type(torch.int64))
-        # logpt = logpt.view(-1)
-        # target = target.view(-1)
         input = input.view(-1, input.size(-1))  # N,H,W, C => N*H*W, C
         target = target.view(-1, 1)
-        # target = torch.sum(target, dim=-1).view(-1, 1)
         logpt = F.log_softmax(input, dim=-1)
         logpt = logpt.gather(-1, target.type(torch.int64))
         logpt = logpt.view(-1)
         target = target.view(-1)
 
         pt = Variable(logpt.data.exp())
-
         loss = -1 * (1-pt)**self.gamma * logpt
         weight = torch.ones(loss.size()).to(target.device)
         if pred_no is not None:
@@ -192,17 +181,6 @@ class OrdinalFocalLoss(nn.Module):
 
     def forward(self, pre_log_prediction, target, prefix=None, prediction=None):
         num_classes = 8
-        # pre_log_prediction (N, H, W, num_classes, 2)
-        # target (N, H, W)
-        # N, H, W = target.size()[0], target.size()[1], target.size()[2]
-        # log_prediction = F.log_softmax(pre_log_prediction, dim=1)
-        # log_prediction = log_prediction.view(N, 2, num_classes, -1).transpose(1, 3)       # (N, H * W, 8, 2)
-        # target = target.view(N, -1, 1)                                           # (N, H * W, 1)
-        # target_with_level = sequence_mask(target, num_classes)                   # (N, H * W, 8, 1)
-        # logpt = log_prediction.gather(-1, target_with_level.type(torch.int64)).to(target.device)       # (N, H * W, 8, 1)
-        # logpt = logpt.view(-1)
-        # pt = Variable(logpt.data.exp())
-        # loss = -1 * (1 - pt) ** self.gamma * logpt
         N, H, W = target.size()[0], target.size()[1], target.size()[2]
         log_prediction = F.log_softmax(pre_log_prediction, dim=-1) # (N, H * W, 8, 2)
         log_prediction = log_prediction.view(N, -1, num_classes, 2)
@@ -232,7 +210,10 @@ def sequence_mask(target, num_classes):
     return mask.unsqueeze(-1)
 
 
-
+if __name__ == "__main__":
+    dataset = "CoNSeP"
+    train_label_dir = f"{os.path.dirname(os.path.dirname(os.getcwd()))}/dataset/{dataset}/Train/Labels"
+    weight = check_weight_loss(train_label_dir, dataset)
 
 
 

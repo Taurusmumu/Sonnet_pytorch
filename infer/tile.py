@@ -1,7 +1,5 @@
-import logging
-import multiprocessing
-from multiprocessing import Lock, Pool
 
+import multiprocessing
 multiprocessing.set_start_method("spawn", True)  # ! must be at top for VScode debugging
 import argparse
 import glob
@@ -15,15 +13,11 @@ import re
 import sys
 import warnings
 from concurrent.futures import FIRST_EXCEPTION, ProcessPoolExecutor, as_completed, wait
-from functools import reduce
-from importlib import import_module
-from multiprocessing import Lock, Pool
 
 import cv2
 import numpy as np
 import psutil
 import scipy.io as sio
-import torch
 import torch.utils.data as data
 import tqdm
 from dataloader.infer_loader import SerializeArray, SerializeFileList
@@ -36,7 +30,6 @@ from misc.utils import (
     rm_n_mkdir,
 )
 from misc.viz_utils import colorize, visualize_instances_dict
-from skimage import color
 import convert_format
 from . import base
 
@@ -186,7 +179,7 @@ class InferManager(base.InferManager):
                 "inst_type": nuc_type_list,
                 "inst_centroid": nuc_coms_list
             }
-            if self.nr_types is None: # matlab does not have None type array
+            if self.nt_class_num is None: # matlab does not have None type array
                 mat_dict.pop("inst_type", None) 
 
             if self.save_raw_map:
@@ -252,7 +245,6 @@ class InferManager(base.InferManager):
             cache_image_info_list = []
             while len(file_path_list) > 0:
                 file_path = file_path_list.pop(0)
-
                 img = cv2.imread(file_path)
                 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
                 src_shape = img.shape
@@ -340,7 +332,7 @@ class InferManager(base.InferManager):
                 }
 
                 post_proc_kwargs = {
-                    "nr_types": self.nr_types,
+                    "nr_types": self.nt_class_num,
                     "return_centroids": True,
                 }  # dynamicalize this
 

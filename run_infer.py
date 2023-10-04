@@ -10,11 +10,11 @@ Options:
   --version                   Show version.
 
   --gpu=<id>                  GPU list. [default: 4]
-  --nr_types=<n>              Number of nuclei types to predict. [default: 4]
+  --nr_types=<n>              Number of nuclei types to predict. [default: 0]
   --type_info_path=<path>     Path to a json define mapping between type id, type name, 
                               and expected overlaid color. [default: ./type_info.json]
 
-  --model_path=<path>         Path to saved checkpoint. [default: ./logs/glysac_666666/glysac_seed/01/net_epoch=49.tar]
+  --model_path=<path>         Path to saved checkpoint. [default: ./logs/glysac_510510/glysac_seed_rgb_bgraug/01/net_epoch=50.tar]
   --model_mode=<mode>         Original HoVer-Net or the reduced version used PanNuke and MoNuSAC, 
                               'original' or 'fast'. [default: original]
   --nr_inference_workers=<n>  Number of workers during inference. [default: 8]
@@ -36,7 +36,7 @@ usage:
     
 options:
    --input_dir=<path>     Path to input data directory. Assumes the files are not nested within directory. [default: ./dataset/GLySAC/Test/Images]
-   --output_dir=<path>    Path to output directory.. [default: ./test_output/glysac_666666/glysac_seed]
+   --output_dir=<path>    Path to output directory.. [default: ./test_output/glysac_510510/glysac_seed_rgb_bgraug]
 
    --mem_usage=<n>        Declare how much memory (physical + swap) should be used for caching. 
                           By default it will load as many tiles as possible till reaching the 
@@ -83,7 +83,6 @@ if __name__ == '__main__':
     sub_cli_dict = {'tile' : tile_cli, 'wsi' : wsi_cli}
     args = docopt(__doc__, help=False, options_first=True, 
                     version='HoVer-Net Pytorch Inference v1.0')
-    # sub_cmd = args.pop('command')
     sub_cmd = 'tile'
     sub_cmd_args = args.pop('<args>')
 
@@ -160,21 +159,6 @@ if __name__ == '__main__':
             'save_qupath' : sub_args['save_qupath'],
             'save_raw_map': sub_args['save_raw_map'],
         })
-
-    if sub_cmd == 'wsi':
-        run_args.update({
-            'input_dir'      : sub_args['input_dir'],
-            'output_dir'     : sub_args['output_dir'],
-            'input_mask_dir' : sub_args['input_mask_dir'],
-            'cache_path'     : sub_args['cache_path'],
-
-            'proc_mag'       : int(sub_args['proc_mag']),
-            'ambiguous_size' : int(sub_args['ambiguous_size']),
-            'chunk_shape'    : int(sub_args['chunk_shape']),
-            'tile_shape'     : int(sub_args['tile_shape']),
-            'save_thumb'     : sub_args['save_thumb'],
-            'save_mask'      : sub_args['save_mask'],
-        })
     # ***
     
     if sub_cmd == 'tile':
@@ -182,6 +166,4 @@ if __name__ == '__main__':
         infer = InferManager(**method_args)
         infer.process_file_list(run_args)
     else:
-        from infer.wsi import InferManager
-        infer = InferManager(**method_args)
-        infer.process_wsi_list(run_args)
+        assert "Can not handle other type yet"

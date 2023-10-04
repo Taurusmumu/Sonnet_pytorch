@@ -19,7 +19,7 @@ from .run_desc import proc_valid_step_output, train_step, valid_step, viz_step_o
 
 # TODO: training config only ?
 # TODO: switch all to function name String for all option
-def get_config(num_classes, nt_class_num, nf_class_num, no_class_num):
+def get_config(num_classes, nf_class_num, no_class_num, nt_class_num=None):
     return {
         # ------------------------------------------------------------------
         # ! All phases have the same number of run engine
@@ -31,9 +31,9 @@ def get_config(num_classes, nt_class_num, nf_class_num, no_class_num):
                     "net": {
                         "desc": lambda: create_model(
                             num_classes=num_classes,
-                            nt_class_num=nt_class_num,
                             nf_class_num=nf_class_num,
                             no_class_num=no_class_num,
+                            nt_class_num=nt_class_num,
                             freeze=True
                         ),
                         "optimizer": [
@@ -86,9 +86,9 @@ def get_config(num_classes, nt_class_num, nf_class_num, no_class_num):
                     "net": {
                         "desc": lambda: create_model(
                             num_classes=num_classes,
-                            nt_class_num=nt_class_num,
                             nf_class_num=nf_class_num,
                             no_class_num=no_class_num,
+                            nt_class_num=nt_class_num,
                             freeze=False
                         ),
                         "optimizer": [

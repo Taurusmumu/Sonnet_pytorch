@@ -10,10 +10,9 @@ import torch.nn as nn
 from models.sonnet.efficientnet_pytorch import EfficientNet
 
 
-
 class Sonnet(nn.Module):
 
-    def __init__(self, num_classes=None, nt_class_num=None, nf_class_num=None, no_class_num=None, freeze=False):
+    def __init__(self, num_classes=None, nf_class_num=None, no_class_num=None, nt_class_num=None, freeze=False):
         super(Sonnet, self).__init__()
         self.freeze = freeze
         self.nt_class_num = nt_class_num
@@ -24,7 +23,8 @@ class Sonnet(nn.Module):
             else:
                 self.unfreeze_encoder()
         # self.encoder = encoder_b0()
-        self.decoder_nt = decoder_nt(num_classes=nt_class_num)
+        if nt_class_num is not None:
+            self.decoder_nt = decoder_nt(num_classes=nt_class_num)
         self.decoder_nf = decoder_nf(num_classes=nf_class_num)
         self.decoder_no = decoder_no(num_classes=no_class_num)
 
@@ -51,10 +51,11 @@ class Sonnet(nn.Module):
         x = x / 255.0
         out_dict = OrderedDict()
         output_middle = self.encoder(x)
-        output_nt = self.decoder_nt(output_middle)
+        if self.nt_class_num is not None:
+            output_nt = self.decoder_nt(output_middle)
+            out_dict[self.decoder_nt.name] = output_nt
         output_nf = self.decoder_nf(output_middle)
         output_no = self.decoder_no(output_middle)
-        out_dict[self.decoder_nt.name] = output_nt
         out_dict[self.decoder_nf.name] = output_nf
         out_dict[self.decoder_no.name] = output_no
         return out_dict

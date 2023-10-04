@@ -1,7 +1,5 @@
 import numpy as np
 import torch.utils.data
-import math
-import warnings
 from imgaug import augmenters as iaa
 from misc.utils import cropping_center
 

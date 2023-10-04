@@ -227,6 +227,7 @@ class VisualizeOutput(BaseCallbacks):
     def run(self, state, event):
         current_epoch = state.curr_epoch
         raw_output = state.step_output["raw"]
-        viz_image = self.proc_func(raw_output, state.step_output["nr_type"])
+        nr_type = None if "nr_type" not in state.step_output else state.step_output["nr_type"]
+        viz_image = self.proc_func(raw_output, nr_type)
         state.tracked_step_output["image"]["output"] = viz_image
         return

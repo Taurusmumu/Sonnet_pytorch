@@ -25,7 +25,7 @@ class InferManager(object):
         for variable, value in kwargs.items():
             self.__setattr__(variable, value)
         self.__load_model()
-        self.nr_types = self.method["model_args"]["nt_class_num"]
+        self.nt_class_num = self.method["model_args"]["nt_class_num"]
         # create type info name and colour
 
         # default
@@ -33,19 +33,19 @@ class InferManager(object):
             None: ["no label", [0, 0, 0]],
         }
 
-        if self.nr_types is not None and self.type_info_path is not None:
+        if self.nt_class_num is not None and self.type_info_path is not None:
             self.type_info_dict = json.load(open(self.type_info_path, "r"))
             self.type_info_dict = {
                 int(k): (v[0], tuple(v[1])) for k, v in self.type_info_dict.items()
             }
             # availability check
-            for k in range(self.nr_types):
+            for k in range(self.nt_class_num):
                 if k not in self.type_info_dict:
                     assert False, "Not detect type_id=%d defined in json." % k
 
-        if self.nr_types is not None and self.type_info_path is None:
+        if self.nt_class_num is not None and self.type_info_path is None:
             cmap = plt.get_cmap("hot")
-            colour_list = np.arange(self.nr_types, dtype=np.int32)
+            colour_list = np.arange(self.nt_class_num, dtype=np.int32)
             colour_list = (cmap(colour_list)[..., :3] * 255).astype(np.uint8)
             # should be compatible out of the box wrt qupath
             self.type_info_dict = {

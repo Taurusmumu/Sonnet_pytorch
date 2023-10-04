@@ -4,7 +4,6 @@ import torch
 import torch.nn.functional as F
 
 from misc.utils import center_pad_to_shape, cropping_center
-from .utils import crop_to_shape, dice_loss, mse_loss, msge_loss, xentropy_loss
 from .loss import TypeFocalLoss, ForeFocalLoss, BinaryDiceLoss, OrdinalFocalLoss
 
 from collections import OrderedDict
@@ -14,6 +13,8 @@ from collections import OrderedDict
 def train_step(batch_data, run_info):
     # TODO: synchronize the attach protocol
     run_info, state_info = run_info
+    model = run_info["net"]["desc"]
+    optimizer = run_info["net"]["optimizer"]
     loss_func_dict = {
         "type_focal": TypeFocalLoss(),
         "fore_focal": ForeFocalLoss(),
@@ -22,36 +23,31 @@ def train_step(batch_data, run_info):
     }
     # use 'ema' to add for EMA calculation, must be scalar!
     result_dict = {"EMA": {}}
-    result_dict["nr_type"] = len(run_info["net"]["extra_info"]["weights"]["nt"][run_info["net"]["dataset_name"]])
+    if model.module.nt_class_num is not None:
+        result_dict["nr_type"] = len(run_info["net"]["extra_info"]["weights"]["nt"][run_info["net"]["dataset_name"]])
     track_value = lambda name, value: result_dict["EMA"].update({name: value})
 
-    ####
-    model = run_info["net"]["desc"]
-    optimizer = run_info["net"]["optimizer"]
-
-    ####
     imgs = batch_data["img"]
-    true_np = batch_data["nf_map"]
+    true_nf = batch_data["nf_map"]
     true_no = batch_data["no_map"]
 
     imgs = imgs.to("cuda").type(torch.float32)  # to NCHW
     imgs = imgs.permute(0, 3, 1, 2).contiguous()
 
     # HWC
-    true_np = true_np.to("cuda").type(torch.int64)
+    true_nf = true_nf.to("cuda").type(torch.int64)
     true_no = true_no.to("cuda").type(torch.float32)
-
-    # true_np_onehot = (F.one_hot(true_np, num_classes=2)).type(torch.float32)
+    # true_nf_onehot = (F.one_hot(true_nf, num_classes=2)).type(torch.float32)
     true_dict = {
-        "nf": true_np,
+        "nf": true_nf,
         "no": true_no,
     }
-
-    true_tp = batch_data["tp_map"]
-    true_tp = torch.squeeze(true_tp).to("cuda").type(torch.int64)
-    # true_tp_onehot = F.one_hot(true_tp, num_classes=model.module.nt_class_num)
-    # true_tp_onehot = true_tp_onehot.type(torch.float32)
-    true_dict["nt"] = true_tp
+    if model.module.nt_class_num is not None:
+        true_tp = batch_data["tp_map"]
+        true_tp = torch.squeeze(true_tp).to("cuda").type(torch.int64)
+        # true_tp_onehot = F.one_hot(true_tp, num_classes=model.module.nt_class_num)
+        # true_tp_onehot = true_tp_onehot.type(torch.float32)
+        true_dict["nt"] = true_tp
 
     ####
     model.train()
@@ -91,21 +87,21 @@ def train_step(batch_data, run_info):
     ####
 
     # pick 2 random sample from the batch for visualization
-    sample_indices = torch.randint(0, true_np.shape[0], (2,))
+    sample_indices = torch.randint(0, true_nf.shape[0], (2,))
 
     imgs = (imgs[sample_indices]).byte()  # to uint8
     imgs = imgs.permute(0, 2, 3, 1).contiguous().cpu().numpy()
 
     pred_dict["nf"] = F.softmax(pred_dict["nf"], dim=-1)[..., 1]  # return pos only
     pred_dict["no"] = no_predictions
-    pred_dict["nt"] = F.softmax(pred_dict["nt"], dim=-1)
-    pred_dict["nt"] = torch.argmax(pred_dict["nt"], dim=-1, keepdim=False)
+    if model.module.nt_class_num is not None:
+        pred_dict["nt"] = F.softmax(pred_dict["nt"], dim=-1)
+        pred_dict["nt"] = torch.argmax(pred_dict["nt"], dim=-1, keepdim=False)
     pred_dict = {
         k: v[sample_indices].detach().cpu().numpy() for k, v in pred_dict.items()
     }
 
-    true_dict["nf"] = true_np
-    true_dict["nt"] = true_tp
+    true_dict["nf"] = true_nf
     true_dict = {
         k: v[sample_indices].detach().cpu().numpy() for k, v in true_dict.items()
     }
@@ -113,10 +109,11 @@ def train_step(batch_data, run_info):
     # * Its up to user to define the protocol to process the raw output per step!
     result_dict["raw"] = {  # protocol for contents exchange within `raw`
         "img": imgs,
-        "nt": (true_dict["nt"], pred_dict["nt"]),
         "nf": (true_dict["nf"], pred_dict["nf"]),
         "no": (true_dict["no"], pred_dict["no"])
     }
+    if model.module.nt_class_num is not None:
+        result_dict["raw"]["nt"] = (true_tp, pred_dict["nt"])
     return result_dict
 
 
@@ -129,24 +126,24 @@ def valid_step(batch_data, run_info):
 
     ####
     imgs = batch_data["img"]
-    true_np = batch_data["nf_map"]
+    true_nf = batch_data["nf_map"]
     true_no = batch_data["no_map"]
 
     imgs_gpu = imgs.to("cuda").type(torch.float32)  # to NCHW
     imgs_gpu = imgs_gpu.permute(0, 3, 1, 2).contiguous()
 
     # HWC
-    true_np = torch.squeeze(true_np).type(torch.int64)
+    true_nf = torch.squeeze(true_nf).type(torch.int64)
     true_no = torch.squeeze(true_no).type(torch.float32)
 
     true_dict = {
-        "nf": true_np,
+        "nf": true_nf,
         "no": true_no,
     }
-
-    true_tp = batch_data["tp_map"]
-    true_tp = torch.squeeze(true_tp).type(torch.int64)
-    true_dict["nt"] = true_tp
+    if model.module.nt_class_num is not None:
+        true_tp = batch_data["tp_map"]
+        true_tp = torch.squeeze(true_tp).type(torch.int64)
+        true_dict["nt"] = true_tp
 
     # --------------------------------------------------------------
     with torch.no_grad():  # dont compute gradient
@@ -163,9 +160,9 @@ def valid_step(batch_data, run_info):
 
         pred_dict["nf"] = F.softmax(pred_dict["nf"], dim=-1)[..., 1]
         pred_dict["no"] = no_predictions
-
-        pred_dict["nt"] = F.softmax(pred_dict["nt"], dim=-1)
-        pred_dict["nt"] = torch.argmax(pred_dict["nt"], dim=-1, keepdim=False)
+        if model.module.nt_class_num is not None:
+            pred_dict["nt"] = F.softmax(pred_dict["nt"], dim=-1)
+            pred_dict["nt"] = torch.argmax(pred_dict["nt"], dim=-1, keepdim=False)
 
     # * Its up to user to define the protocol to process the raw output per step!
     result_dict = {  # protocol for contents exchange within `raw`
@@ -178,9 +175,9 @@ def valid_step(batch_data, run_info):
             "pred_no": pred_dict["no"].cpu().numpy(),
         }
     }
-    # if model.module.nr_types is not None:
-    result_dict["raw"]["true_nt"] = true_dict["nt"].numpy()
-    result_dict["raw"]["pred_nt"] = pred_dict["nt"].cpu().numpy()
+    if model.module.nt_class_num is not None:
+        result_dict["raw"]["true_nt"] = true_dict["nt"].numpy()
+        result_dict["raw"]["pred_nt"] = pred_dict["nt"].cpu().numpy()
     return result_dict
 
 
@@ -210,7 +207,7 @@ def infer_step(batch_data, model):
         # pred_dict["no"][pred_dict["no"] >= 0.5] = 1
         # pred_dict["no"] = torch.argmin(pred_dict["no"], dim=-1, keepdim=True)
 
-        if "nt" in pred_dict:
+        if model.module.nt_class_num is not None:
             type_map = F.softmax(pred_dict["nt"], dim=-1)
             type_map = torch.argmax(type_map, dim=-1, keepdim=True)
             type_map = type_map.type(torch.float32)
@@ -229,11 +226,12 @@ def viz_step_output(raw_data, nr_types=None):
     """
 
     imgs = raw_data["img"]
-    true_np, pred_np = raw_data["nf"]
+    true_nf, pred_nf = raw_data["nf"]
     true_no, pred_no = raw_data["no"]
-    true_tp, pred_tp = raw_data["nt"]
+    if nr_types is not None:
+        true_tp, pred_tp = raw_data["nt"]
 
-    aligned_shape = [list(imgs.shape), list(true_np.shape), list(pred_np.shape)]
+    aligned_shape = [list(imgs.shape), list(true_nf.shape), list(pred_nf.shape)]
     aligned_shape = np.min(np.array(aligned_shape), axis=0)[1:3]
 
     cmap = plt.get_cmap("jet")
@@ -258,27 +256,23 @@ def viz_step_output(raw_data, nr_types=None):
 
         true_viz_list = [img]
         # cmap may randomly fails if of other types
-        true_viz_list.append(colorize(true_np[idx], 0, 1))
+        true_viz_list.append(colorize(true_nf[idx], 0, 1))
         true_viz_list.append(colorize(true_no[idx], 0, 8))
-        # if nr_types is not None:  # TODO: a way to pass through external info
-        true_viz_list.append(colorize(true_tp[idx], 0, nr_types))
+        if nr_types is not None:  # TODO: a way to pass through external info
+            true_viz_list.append(colorize(true_tp[idx], 0, nr_types))
         true_viz_list = np.concatenate(true_viz_list, axis=1)
 
         pred_viz_list = [img]
         # cmap may randomly fails if of other types
-        pred_viz_list.append(colorize(pred_np[idx], 0, 1))
+        pred_viz_list.append(colorize(pred_nf[idx], 0, 1))
         pred_viz_list.append(colorize(pred_no[idx], 0, 8))
-        # if nr_types is not None:
-        pred_viz_list.append(colorize(pred_tp[idx], 0, nr_types))
+        if nr_types is not None:
+            pred_viz_list.append(colorize(pred_tp[idx], 0, nr_types))
         pred_viz_list = np.concatenate(pred_viz_list, axis=1)
 
         viz_list.append(np.concatenate([true_viz_list, pred_viz_list], axis=0))
     viz_list = np.concatenate(viz_list, axis=0)
     return viz_list
-
-
-####
-from itertools import chain
 
 
 def proc_valid_step_output(raw_data, nr_types=None):
@@ -298,22 +292,22 @@ def proc_valid_step_output(raw_data, nr_types=None):
     over_inter = 0
     over_total = 0
     over_correct = 0
-    prob_np = raw_data["pred_nf"]
-    true_np = raw_data["true_nf"]
+    prob_nf = raw_data["pred_nf"]
+    true_nf = raw_data["true_nf"]
     for idx in range(len(raw_data["true_nf"])):
-        patch_prob_np = prob_np[idx]
-        patch_true_np = true_np[idx]
-        patch_pred_np = np.array(patch_prob_np > 0.5, dtype=np.int32)
-        inter, total = _dice_info(patch_true_np, patch_pred_np, 1)
-        correct = (patch_pred_np == patch_true_np).sum()
+        patch_prob_nf = prob_nf[idx]
+        patch_true_nf = true_nf[idx]
+        patch_pred_nf = np.array(patch_prob_nf > 0.5, dtype=np.int32)
+        inter, total = _dice_info(patch_true_nf, patch_pred_nf, 1)
+        correct = (patch_pred_nf == patch_true_nf).sum()
         over_inter += inter
         over_total += total
         over_correct += correct
-    nr_pixels = len(true_np) * np.size(true_np[0])
-    acc_np = over_correct / nr_pixels
-    dice_np = 2 * over_inter / (over_total + 1.0e-8)
-    track_value("np_acc", acc_np, "scalar")
-    track_value("np_dice", dice_np, "scalar")
+    nr_pixels = len(true_nf) * np.size(true_nf[0])
+    acc_nf = over_correct / nr_pixels
+    dice_nf = 2 * over_inter / (over_total + 1.0e-8)
+    track_value("nf_acc", acc_nf, "scalar")
+    track_value("nf_dice", dice_nf, "scalar")
 
     # * TP statistic
     if nr_types is not None:
@@ -349,11 +343,11 @@ def proc_valid_step_output(raw_data, nr_types=None):
     imgs = raw_data["imgs"]
     selected_idx = np.random.randint(0, len(imgs), size=(8,)).tolist()
     imgs = np.array([imgs[idx] for idx in selected_idx])
-    true_np = np.array([true_np[idx] for idx in selected_idx])
+    true_nf = np.array([true_nf[idx] for idx in selected_idx])
     true_no = np.array([true_no[idx] for idx in selected_idx])
-    prob_np = np.array([prob_np[idx] for idx in selected_idx])
+    prob_nf = np.array([prob_nf[idx] for idx in selected_idx])
     pred_no = np.array([pred_no[idx] for idx in selected_idx])
-    viz_raw_data = {"img": imgs, "nf": (true_np, prob_np), "no": (true_no, pred_no)}
+    viz_raw_data = {"img": imgs, "nf": (true_nf, prob_nf), "no": (true_no, pred_no)}
 
     if nr_types is not None:
         true_tp = np.array([true_tp[idx] for idx in selected_idx])

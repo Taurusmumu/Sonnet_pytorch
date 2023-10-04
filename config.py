@@ -11,7 +11,7 @@ class Config(object):
     """Configuration file."""
 
     def __init__(self):
-        self.seed = 88888888
+        self.seed = 510510
         self.logging = True
 
         # turn on debug flag to trace some parallel processing problems more easily
@@ -33,7 +33,9 @@ class Config(object):
         # self.dataset_name = "consep"
 
         self.log_dir = "logs/" # where checkpoints will be saved
-        nt_class_num = 5 if self.dataset_name == "consep" else 4  # for glysac # number of nuclear types (including background)
+        nt_class_num = None
+        if self.type_classification:
+            nt_class_num = 5 if self.dataset_name == "consep" else 4  # for glysac # number of nuclear types (including background)
         num_classes = 1024  # number of nuclear types (including background)
         nf_class_num = 2
         no_class_num = 16
@@ -56,4 +58,4 @@ class Config(object):
         module = importlib.import_module(
             "models.%s.opt" % model_name
         )
-        self.model_config = module.get_config(num_classes, nt_class_num, nf_class_num, no_class_num)
+        self.model_config = module.get_config(num_classes, nf_class_num, no_class_num, nt_class_num)
