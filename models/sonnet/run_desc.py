@@ -102,6 +102,8 @@ def train_step(batch_data, run_info):
     }
 
     true_dict["nf"] = true_nf
+    if model.module.nt_class_num is not None:
+        true_dict["nt"] = true_tp
     true_dict = {
         k: v[sample_indices].detach().cpu().numpy() for k, v in true_dict.items()
     }
@@ -113,7 +115,7 @@ def train_step(batch_data, run_info):
         "no": (true_dict["no"], pred_dict["no"])
     }
     if model.module.nt_class_num is not None:
-        result_dict["raw"]["nt"] = (true_tp, pred_dict["nt"])
+        result_dict["raw"]["nt"] = (true_dict["nt"], pred_dict["nt"])
     return result_dict
 
 
