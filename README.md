@@ -110,10 +110,10 @@ python compute_stats.py
 <table border="0">
 <tr>
     <td>
-    <img src="docs/result_1.png", width="30%" />
+    <img src="docs/result_1.png", width="100%" />
     </td> 
     <td>
-    <img src="docs/results_2.png", width="30%" /> 
+    <img src="docs/results_2.png", width="100%" /> 
     </td>
 </tr>
 </table>
@@ -126,7 +126,7 @@ Yellow: inflammatory
 
 ## Comparison to Original TensorFlow Implementation
 
-Below we report the difference in simultaneous segmentation and classification results trained using this repository (PyTorch) and the results reported in the original manuscript (TensorFlow). 
+Below we report the difference in simultaneous segmentation and classification results trained using this repository (PyTorch) and the results reported in the original paper (TensorFlow). 
 
 Segmentation results on the CoNSeP dataset:
 | Platform   | DICE       | PQ         | SQ          | DQ          | AJI         |
