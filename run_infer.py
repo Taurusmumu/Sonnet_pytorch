@@ -9,21 +9,19 @@ Options:
   -h --help                   Show this string.
   --version                   Show version.
 
-  --gpu=<id>                  GPU list. [default: 4]
-  --nr_types=<n>              Number of nuclei types to predict. [default: 0]
+  --gpu=<id>                  GPU list. [default: 3]
+  --nr_types=<n>              Number of nuclei types to predict. Set 4 if glysac or 5 if consep [default: 4]
   --type_info_path=<path>     Path to a json define mapping between type id, type name, 
                               and expected overlaid color. [default: ./type_info.json]
 
-  --model_path=<path>         Path to saved checkpoint. [default: ./logs/glysac_510510/glysac_seed_rgb_bgraug/01/net_epoch=50.tar]
-  --model_mode=<mode>         Original HoVer-Net or the reduced version used PanNuke and MoNuSAC, 
-                              'original' or 'fast'. [default: original]
+  --model_path=<path>         Path to saved checkpoint. [default: ./pretrain/sonnet_glysac_type_pytorch.tar]
   --nr_inference_workers=<n>  Number of workers during inference. [default: 8]
   --nr_post_proc_workers=<n>  Number of workers during post-processing. [default: 16]
   --batch_size=<n>            Batch size per 1 GPU. [default: 32]
 
 Two command mode are `tile` and `wsi` to enter corresponding inference mode
     tile  run the inference on tile
-    wsi   run the inference on wsi
+    wsi   not support yet
 
 Use `run_infer.py <command> --help` to show their options and usage.
 """
@@ -36,7 +34,7 @@ usage:
     
 options:
    --input_dir=<path>     Path to input data directory. Assumes the files are not nested within directory. [default: ./dataset/GLySAC/Test/Images]
-   --output_dir=<path>    Path to output directory.. [default: ./test_output/glysac_510510/glysac_seed_rgb_bgraug]
+   --output_dir=<path>    Path to output directory.. [default: ./test_output/]
 
    --mem_usage=<n>        Declare how much memory (physical + swap) should be used for caching. 
                           By default it will load as many tiles as possible till reaching the 
@@ -46,43 +44,17 @@ options:
    --save_raw_map=<n>         To save raw prediction or not. [default: False]
 """
 
-wsi_cli = """
-Arguments for processing wsi
-
-usage:
-    wsi (--input_dir=<path>) (--output_dir=<path>) [--proc_mag=<n>]\
-        [--cache_path=<path>] [--input_mask_dir=<path>] \
-        [--ambiguous_size=<n>] [--chunk_shape=<n>] [--tile_shape=<n>] \
-        [--save_thumb] [--save_mask]
-    
-options:
-    --input_dir=<path>      Path to input data directory. Assumes the files are not nested within directory.
-    --output_dir=<path>     Path to output directory.
-    --cache_path=<path>     Path for cache. Should be placed on SSD with at least 100GB. [default: cache]
-    --mask_dir=<path>       Path to directory containing tissue masks. 
-                            Should have the same name as corresponding WSIs. [default: '']
-
-    --proc_mag=<n>          Magnification level (objective power) used for WSI processing. [default: 40]
-    --ambiguous_size=<int>  Define ambiguous region along tiling grid to perform re-post processing. [default: 128]
-    --chunk_shape=<n>       Shape of chunk for processing. [default: 10000]
-    --tile_shape=<n>        Shape of tiles for processing. [default: 2048]
-    --save_thumb            To save thumb. [default: False]
-    --save_mask             To save mask. [default: False]
-"""
-
 import torch
 import logging
 import os
-import copy
 from misc.utils import log_info
 from docopt import docopt
 
 #-------------------------------------------------------------------------------------------------------
 
 if __name__ == '__main__':
-    sub_cli_dict = {'tile' : tile_cli, 'wsi' : wsi_cli}
-    args = docopt(__doc__, help=False, options_first=True, 
-                    version='HoVer-Net Pytorch Inference v1.0')
+    sub_cli_dict = {'tile' : tile_cli}
+    args = docopt(__doc__, help=False, options_first=True, version='Sonnet Pytorch Inference v1.0')
     sub_cmd = 'tile'
     sub_cmd_args = args.pop('<args>')
 
@@ -141,13 +113,8 @@ if __name__ == '__main__':
         'nr_inference_workers' : int(args['nr_inference_workers']),
         'nr_post_proc_workers' : int(args['nr_post_proc_workers']),
     }
-
-    if args['model_mode'] == 'fast':
-        run_args['patch_input_shape'] = 256
-        run_args['patch_output_shape'] = 164
-    else:
-        run_args['patch_input_shape'] = 270
-        run_args['patch_output_shape'] = 76
+    run_args['patch_input_shape'] = 270
+    run_args['patch_output_shape'] = 76
 
     if sub_cmd == 'tile':
         run_args.update({
