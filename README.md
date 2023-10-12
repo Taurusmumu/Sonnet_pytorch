@@ -137,8 +137,8 @@ Segmentation results on the CoNSeP dataset:
 Classification results on CoNSeP dataset: 
 | Platform   | F1         | Miscellaneous| Inflammatory| Epithelial  | Spindle     |
 | -----------|------------| -------------| ------------| ------------| ------------|
-| TensorFlow | 0.778      | 0.465        |0.659        |0.662        |0.597        |
-| PyTorch    | 0.750      | 0.400        |0.608        |0.635        |0.557        |
+| TensorFlow | 0.778      |     0.465    |    0.659    |    0.662    |   0.597     |
+| PyTorch    | 0.750      |     0.400    |    0.608    |    0.635    |   0.557     |
 
 Segmentation results on the GLySAC dataset:
 | Platform   | DICE       | PQ         | SQ          | DQ          | AJI         |
@@ -149,8 +149,8 @@ Segmentation results on the GLySAC dataset:
 Classification results on GLySAC dataset: 
 | Platform   | F1         | Miscellaneous| Lymphocyte  | Epithelial  |
 | -----------|------------| ------------ | ------------| ------------|
-| TensorFlow | 0.864      |0.360         |0.559        |0.557        |
-| PyTorch    | 0.854      |0.304         |0.530        |0.556        |
+| TensorFlow | 0.864      |     0.360    |    0.559    |    0.557    |
+| PyTorch    | 0.854      |     0.304    |    0.530    |    0.556    |
 
 
 
