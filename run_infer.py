@@ -10,11 +10,11 @@ Options:
   --version                   Show version.
 
   --gpu=<id>                  GPU list. [default: 3]
-  --nr_types=<n>              Number of nuclei types to predict. Set 4 if glysac or 5 if consep [default: 4]
+  --nr_types=<n>              Number of nuclei types to predict. Set 4 if glysac or 5 if consep [default: 5]
   --type_info_path=<path>     Path to a json define mapping between type id, type name, 
                               and expected overlaid color. [default: ./type_info.json]
 
-  --model_path=<path>         Path to saved checkpoint. [default: ./pretrain/sonnet_glysac_type_pytorch.tar]
+  --model_path=<path>         Path to saved checkpoint. [default: ./logs/consep_88888888/consep_seed/01/net_epoch=45.tar]
   --nr_inference_workers=<n>  Number of workers during inference. [default: 8]
   --nr_post_proc_workers=<n>  Number of workers during post-processing. [default: 16]
   --batch_size=<n>            Batch size per 1 GPU. [default: 32]
@@ -33,8 +33,8 @@ usage:
     tile [--input_dir=<path>] [--output_dir=<path>] [--draw_dot=<n>] [--save_qupath=<n>] [--save_raw_map=<n>] [--mem_usage=<n>]
     
 options:
-   --input_dir=<path>     Path to input data directory. Assumes the files are not nested within directory. [default: ./dataset/GLySAC/Test/Images]
-   --output_dir=<path>    Path to output directory.. [default: ./test_output/]
+   --input_dir=<path>     Path to input data directory. Assumes the files are not nested within directory. [default: ./dataset/CoNSeP/Test/Images]
+   --output_dir=<path>    Path to output directory.. [default: ./test_output/consep_88888888/consep_seed]
 
    --mem_usage=<n>        Declare how much memory (physical + swap) should be used for caching. 
                           By default it will load as many tiles as possible till reaching the 

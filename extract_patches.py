@@ -19,17 +19,12 @@ if __name__ == "__main__":
     win_size = [540, 540]
     step_size = [164, 164]
     extract_type = "mirror"  # Choose 'mirror' or 'valid'. 'mirror'- use padding at borders. 'valid'- only extract from valid regions.
-    # dataset_name = "CoNSeP"
-    dataset_name = "GLySAC"
+    dataset_name = "CoNSeP"
+    # dataset_name = "GLySAC"
 
     save_root = "dataset/training_data"
     # a dictionary to specify where the dataset path should be
     dataset_info = {
-        # "train_mix_0_p1_100": {
-        #     "img": (".png", f"dataset/{dataset_name}/Train_mix/Images/"),
-        #     "ann": (".mat", f"dataset/{dataset_name}/Train_mix/Labels/"),
-        #     "msk": (".png", f"dataset/{dataset_name}/Train_mix/Masks/"),
-        # },
         "train": {
             "img": (".png" if dataset_name.lower() == "consep" else ".tif", f"dataset/{dataset_name}/Train/Images/"),
             "ann": (".mat", f"dataset/{dataset_name}/Train/Labels/"),
