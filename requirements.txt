@@ -13,6 +13,6 @@ scikit-learn==0.24.2
 scipy==1.5.2
 termcolor==1.1.0
 tqdm==4.63.0
-imagecodecs
-tensorboardX
-tensorboard
+imagecodecs=2023.3.16
+tensorboardX=2.6.2.2
+tensorboard=2.6.2.2

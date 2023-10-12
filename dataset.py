@@ -67,13 +67,6 @@ class __Kumar(__AbstractDataset):
 
 ####
 class __GLySAC(__AbstractDataset):
-    """Defines the CPM 2017 dataset as originally introduced in:
-
-    Vu, Quoc Dang, Simon Graham, Tahsin Kurc, Minh Nguyen Nhat To, Muhammad Shaban,
-    Talha Qaiser, Navid Alemi Koohbanani et al. "Methods for segmentation and classification
-    of digital microscopy tissue images." Frontiers in bioengineering and biotechnology 7 (2019).
-
-    """
 
     def load_img(self, path):
         return cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB)
@@ -87,7 +80,7 @@ class __GLySAC(__AbstractDataset):
         inst_map = original_maps['inst_map'].astype(int)
         inst_centroid = original_maps['inst_centroid']
         img_size = inst_map.shape[0]
-        dist_map = np.full((img_size, img_size), 0, dtype='float32')
+        ordinal_map = np.full((img_size, img_size), 0, dtype='float32')
         for uid in np.unique(inst_map):
             if uid == 0:
                 continue
@@ -96,7 +89,7 @@ class __GLySAC(__AbstractDataset):
             coordinate_np = np.array([np.where(mask == True)[0], np.where(mask == True)[1]])
             coordinate_np = np.sqrt(np.power(coordinate_np[0, :] - cent[1], 2) + np.power(coordinate_np[1, :] - cent[0], 2))
             coordinate_np /= max(coordinate_np)
-            dist_map[np.where(mask > 0)] = tk_labelize(tk_label_list, coordinate_np)
+            ordinal_map[np.where(mask > 0)] = tk_labelize(tk_label_list, coordinate_np)
 
         if with_type:
             ann_type = sio.loadmat(path)["type_map"]
@@ -106,10 +99,10 @@ class __GLySAC(__AbstractDataset):
             ann_type[(ann_type == 1) | (ann_type == 2) | (ann_type == 9) | (ann_type == 10)] = 1
             ann_type[(ann_type == 4) | (ann_type == 5) | (ann_type == 6) | (ann_type == 7)] = 2
             ann_type[(ann_type == 3) | (ann_type == 8)] = 3
-            ann = np.dstack([original_maps["inst_map"], ann_type, dist_map])
+            ann = np.dstack([original_maps["inst_map"], ann_type, ordinal_map])
             ann = ann.astype("int32")
         else:
-            ann = np.expand_dims(original_maps["inst_map"], -1)
+            ann = np.dstack([original_maps["inst_map"], ordinal_map])
             ann = ann.astype("int32")
 
         return ann
@@ -137,7 +130,7 @@ class __CoNSeP(__AbstractDataset):
         inst_map = original_maps['inst_map'].astype(int)
         inst_centroid = original_maps['inst_centroid']
         img_size = inst_map.shape[0]
-        dist_map = np.full((img_size, img_size), 0, dtype='float32')
+        ordinal_map = np.full((img_size, img_size), 0, dtype='float32')
         for uid in np.unique(inst_map):
             if uid == 0:
                 continue
@@ -147,7 +140,7 @@ class __CoNSeP(__AbstractDataset):
             coordinate_np = np.sqrt(
                 np.power(coordinate_np[0, :] - cent[1], 2) + np.power(coordinate_np[1, :] - cent[0], 2))
             coordinate_np /= max(coordinate_np)
-            dist_map[np.where(mask > 0)] = tk_labelize(tk_label_list, coordinate_np)
+            ordinal_map[np.where(mask > 0)] = tk_labelize(tk_label_list, coordinate_np)
 
         if with_type:
             ann_type = original_maps["type_map"]
@@ -157,10 +150,10 @@ class __CoNSeP(__AbstractDataset):
             ann_type[(ann_type == 3) | (ann_type == 4)] = 3
             ann_type[(ann_type == 5) | (ann_type == 6) | (ann_type == 7)] = 4
 
-            ann = np.dstack([original_maps["inst_map"], ann_type, dist_map])
+            ann = np.dstack([original_maps["inst_map"], ann_type, ordinal_map])
             ann = ann.astype("int32")
         else:
-            ann = np.expand_dims(original_maps["inst_map"], -1)
+            ann = np.dstack([original_maps["inst_map"], ordinal_map])
             ann = ann.astype("int32")
 
         return ann
@@ -170,7 +163,7 @@ class __CoNSeP(__AbstractDataset):
 def get_dataset(name):
     """Return a pre-defined dataset object associated with `name`."""
     name_dict = {
-        "kumar": lambda: __Kumar(),
+        # "kumar": lambda: __Kumar(),
         "glysac": lambda: __GLySAC(),
         "consep": lambda: __CoNSeP(),
     }

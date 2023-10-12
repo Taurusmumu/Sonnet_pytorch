@@ -79,7 +79,7 @@ class FileLoader(torch.utils.data.Dataset):
             img = input_augs.augment_image(img)
 
         img = cropping_center(img, self.input_shape)
-        od_map = (ann[..., 2]).copy()
+        od_map = (ann[..., -1]).copy()
         np_map = (ann[..., 0]).copy()
         np_map[np_map > 0] = 1
         od_map = cropping_center(od_map, self.mask_shape)
