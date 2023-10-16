@@ -58,15 +58,18 @@ def get_config(num_classes, nf_class_num, no_class_num, nt_class_num=None):
                             "weights": {
                                 "nt": {
                                     "consep": [0.299, 2.348, 0.945, 0.638, 0.770],
-                                    "glysac": [0.456, 1.408, 1.149, 0.987]
+                                    "glysac": [0.456, 1.408, 1.149, 0.987],
+                                    "monusac":[0.315, 0.631, 0.875, 1.219, 1.959]
                                 },
                                 "nf": {
                                     "consep": [0.734, 1.266],
                                     "glysac": [0.735, 1.265],
+                                    "monusac": [0.732, 1.268],
                                 },
                                 "no": {
                                     "consep": [],
                                     "glysac": [],
+                                    "monusac": []
                                 }
                             }
                         },
@@ -113,15 +116,18 @@ def get_config(num_classes, nf_class_num, no_class_num, nt_class_num=None):
                             "weights": {
                                 "nt": {
                                     "consep": [0.299, 2.348, 0.945, 0.638, 0.770],
-                                    "glysac": [0.456, 1.408, 1.149, 0.987]
+                                    "glysac": [0.456, 1.408, 1.149, 0.987],
+                                    "monusac":[0.315, 0.631, 0.875, 1.219, 1.959]
                                 },
                                 "nf": {
                                     "consep": [0.734, 1.266],
                                     "glysac": [0.735, 1.265],
+                                    "monusac": [0.732, 1.268],
                                 },
                                 "no": {
                                     "consep": [],
                                     "glysac": [],
+                                    "monusac":[]
                                 }
                             }
                         },

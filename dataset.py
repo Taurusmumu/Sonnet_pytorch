@@ -64,6 +64,40 @@ class __Kumar(__AbstractDataset):
         ann = np.expand_dims(ann_inst, -1)
         return ann
 
+class __MoNuSAC(__AbstractDataset):
+
+    def load_img(self, path):
+        return cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB)
+
+    def load_msk(self, path):
+        return cv2.imread(path)
+
+    def load_ann(self, path, with_type=False):
+        # assumes that ann is HxW
+        original_maps = sio.loadmat(path)
+        inst_map = original_maps['inst_map'].astype(int)
+        inst_centroid = original_maps['inst_centroid']
+        ordinal_map = np.full((inst_map.shape[0], inst_map.shape[1]), 0, dtype='float32')
+        for uid in np.unique(inst_map):
+            if uid == 0:
+                continue
+            cent = inst_centroid[uid - 1]
+            mask = (inst_map == uid).astype(int)
+            coordinate_np = np.array([np.where(mask == True)[0], np.where(mask == True)[1]])
+            coordinate_np = np.sqrt(
+                np.power(coordinate_np[0, :] - cent[1], 2) + np.power(coordinate_np[1, :] - cent[0], 2))
+            coordinate_np /= max(coordinate_np)
+            ordinal_map[np.where(mask > 0)] = tk_labelize(tk_label_list, coordinate_np)
+
+        if with_type:
+            ann_type = original_maps["type_map"]
+            ann = np.dstack([original_maps["inst_map"], ann_type, ordinal_map])
+            ann = ann.astype("int32")
+        else:
+            ann = np.dstack([original_maps["inst_map"], ordinal_map])
+            ann = ann.astype("int32")
+
+        return ann
 
 ####
 class __GLySAC(__AbstractDataset):
@@ -164,6 +198,7 @@ def get_dataset(name):
     """Return a pre-defined dataset object associated with `name`."""
     name_dict = {
         # "kumar": lambda: __Kumar(),
+        "monusac": lambda: __MoNuSAC(),
         "glysac": lambda: __GLySAC(),
         "consep": lambda: __CoNSeP(),
     }

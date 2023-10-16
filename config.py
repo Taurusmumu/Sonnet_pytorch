@@ -20,22 +20,17 @@ class Config(object):
 
         # whether to predict the nuclear type, availability depending on dataset!
         self.type_classification = True
-
-        # shape information - 
-        # below config is for original mode. 
-        # If original model mode is used, use [270,270] and [80,80] for act_shape and out_shape respectively
-        # If fast model mode is used, use [256,256] and [164,164] for act_shape and out_shape respectively
-        aug_shape = [540, 540] # patch shape used during augmentation (larger patch may have less border artefacts)
         act_shape = [270, 270] # patch shape used as input to network - central crop performed after augmentation
         out_shape = [76, 76] # patch shape at output of network
 
+        # self.dataset_name = "monusac"
         self.dataset_name = "glysac" # extracts dataset info from dataset.py
         # self.dataset_name = "consep"
 
         self.log_dir = "logs/" # where checkpoints will be saved
         nt_class_num = None
         if self.type_classification:
-            nt_class_num = 5 if self.dataset_name == "consep" else 4  # for glysac # number of nuclear types (including background)
+            nt_class_num = 4 if self.dataset_name == "glysac" else 5  # for consep and monusac # number of nuclear types (including background)
         num_classes = 1024  # number of nuclear types (including background)
         nf_class_num = 2
         no_class_num = 16
@@ -44,8 +39,7 @@ class Config(object):
             f"./dataset/training_data/{self.dataset_name}/valid/540x540_164x164"
         ]
         self.train_dir_list = [
-            f"./dataset/training_data/{self.dataset_name}/train/540x540_164x164",
-            # f"./dataset/training_data/{self.dataset_name}/train_mix_0_p1_40/540x540_164x164"
+            f"./dataset/training_data/{self.dataset_name}/train/540x540_164x164"
         ]
         self.shape_info = {
             "train": {"input_shape": act_shape, "mask_shape": out_shape,},

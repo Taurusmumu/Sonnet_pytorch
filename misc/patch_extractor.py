@@ -119,11 +119,11 @@ class PatchExtractor(object):
             a list of sub patches, each patch is same dtype as x
             
         """
-        diff_h = self.win_size[0] - self.step_size[0]
+        diff_h = max(self.win_size[0] - self.step_size[0], self.win_size[0] - x.shape[0])
         padt = diff_h // 2
         padb = diff_h - padt
 
-        diff_w = self.win_size[1] - self.step_size[1]
+        diff_w = max(self.win_size[1] - self.step_size[1], self.win_size[1] - x.shape[1])
         padl = diff_w // 2
         padr = diff_w - padl
 
