@@ -130,7 +130,7 @@ Below we report the difference in simultaneous segmentation and classification r
 
 Segmentation results on the CoNSeP dataset:
 | Platform   | DICE       | PQ         | SQ          | DQ          | AJI         |
-| -----------| -----------| -----------| ------------| ------------| ------------|
+| :--------: | :--------: | :--------: | :---------: | :---------: | :---------: |
 | TensorFlow | 0.844      | 0.698      | 0.772       |0.540        |0.586        |
 | PyTorch    | 0.830      | 0.657      | 0.754       |0.497        |0.556        |
 
@@ -142,7 +142,7 @@ Classification results on CoNSeP dataset:
 
 Segmentation results on the GLySAC dataset:
 | Platform   | DICE       | PQ         | SQ          | DQ          | AJI         |
-| -----------| -----------| -----------| ------------| ------------| ------------|
+| :--------: | :--------: | :--------: | :---------: | :---------: | :---------: |
 | TensorFlow | 0.838      | 0.648      | 0.796       |0.811        |0.672        |
 | PyTorch    | 0.824      | 0.621      | 0.778       |0.794        |0.648        |
 
